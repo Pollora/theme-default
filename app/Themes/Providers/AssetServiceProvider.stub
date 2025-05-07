@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Themes\%theme_namespace%\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Pollora\Support\Facades\Asset;
+use Pollora\Support\Facades\Theme;
+
+class AssetServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        Asset::add('%theme_name%/script', 'assets/app.js')
+            ->container('theme')
+            ->toFrontend()
+            ->useVite();
+    }
+}
