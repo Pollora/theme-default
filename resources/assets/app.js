@@ -6,8 +6,8 @@
 
 
 import.meta.glob([
-    '../assets/images/**',
-    '../assets/fonts/**',
+    './images/**',
+    './fonts/**',
 ]);
 
 import "./js/bootstrap.js";

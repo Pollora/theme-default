@@ -16,12 +16,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Inherit from another theme
+    | Theme assets path
     |--------------------------------------------------------------------------
     |
-    | Set up inherit from another if the file is not exists.
+    | Use in assets publishing etc.
     |
     */
-
-    'inherit' => null,
+    'assets_path' => 'resources/assets',
 ];

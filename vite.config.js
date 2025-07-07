@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import laravel, { refreshPaths } from 'laravel-vite-plugin';
 import path from 'path';
+import tailwindcss from '@tailwindcss/vite';
 
 // Détection de l'environnement
 const isDocker = process.env.IS_DOCKER || process.env.DOCKER_ENV || process.env.DDEV_PRIMARY_URL;
@@ -9,7 +10,6 @@ const publicDirectory = "../../public";
 const themeName = path.basename(__dirname);
 
 const getBaseUrl = () => {
-    console.log(process.env.APP_URL);
     return process.env.APP_URL || process.env.DDEV_PRIMARY_URL || 'http://localhost';
 };
 
@@ -56,23 +56,24 @@ const getDevServerConfig = () => {
 };
 
 const getThemeConfig = () => ({
-    base: "/build/" + themeName,
-    input: ["./assets/app.js"],
+    base: "/build/theme/" + themeName,
+    input: ["./resources/assets/app.js"],
     publicDirectory,
     hotFile: path.join(publicDirectory, `${themeName}.hot`),
-    buildDirectory: path.join("build", themeName),
+    buildDirectory: path.join("build", "theme", themeName),
     refresh: [
         ...refreshPaths,
-        'themes/'+themeName+'/views/**',
+        'themes/'+themeName+'/resources/views/**',
     ],
 });
 
 export default defineConfig({
-    base: "/build/" + themeName,
+    base: "/build/theme/" + themeName,
     build: {
         emptyOutDir: false,
     },
     plugins: [
+        tailwindcss(),
         laravel(getThemeConfig()),
         {
             name: "blade",

@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Themes\%theme_namespace%\Providers\AssetServiceProvider;
-
 /*
 |--------------------------------------------------------------------------
 | Theme Service Providers
@@ -15,5 +13,4 @@ use App\Themes\%theme_namespace%\Providers\AssetServiceProvider;
 |
 */
 return [
-    AssetServiceProvider::class,
 ];

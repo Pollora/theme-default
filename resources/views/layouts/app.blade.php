@@ -10,9 +10,6 @@
     @wphead
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <!-- Styles -->
-    <link href="//fonts.googleapis.com/css?family=Nunito:200,600" rel="stylesheet">
 </head>
 
 <body class="{{ $post->classes ?? '' }} flex h-full bg-zinc-50">
@@ -73,7 +70,7 @@
                 @yield('content')
 
                 <div class="max-w-[200px] my-20 mx-auto">
-                    <img src="{{ Asset::url('assets/images/pollora.svg') }}">
+                    <img src="{{ Asset::url('images/pollora.svg') }}">
                 </div>
             </div>
         </main>
