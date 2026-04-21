@@ -56,11 +56,11 @@ const getDevServerConfig = () => {
 };
 
 const getThemeConfig = () => ({
-    base: "/build/" + themeName,
+    base: "/build/theme/" + themeName,
     input: ["./resources/assets/app.js"],
     publicDirectory,
     hotFile: path.join(publicDirectory, `${themeName}.hot`),
-    buildDirectory: path.join("build", themeName),
+    buildDirectory: path.join("build", "theme", themeName),
     refresh: [
         ...refreshPaths,
         'themes/'+themeName+'/resources/views/**',
@@ -72,7 +72,7 @@ const getThemeConfig = () => ({
 });
 
 export default defineConfig({
-    base: "/build/" + themeName,
+    base: "/build/theme/" + themeName,
     build: {
         emptyOutDir: false,
     },
