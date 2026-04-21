@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Theme\Default\Providers;
+namespace %theme_namespace%\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Pollora\Support\Facades\Asset;
@@ -19,7 +19,7 @@ class AssetServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Asset::add('default/script', 'app.js')
+        Asset::add('%theme_name%/script', 'app.js')
             ->container('theme')
             ->toFrontend()
             ->useVite();
