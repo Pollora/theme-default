@@ -13,4 +13,6 @@ declare(strict_types=1);
 |
 */
 return [
+    %theme_namespace%\Providers\AssetServiceProvider::class,
+    %theme_namespace%\Providers\MenuServiceProvider::class,
 ];
