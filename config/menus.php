@@ -9,5 +9,6 @@ declare(strict_types=1);
  * @see https://developer.wordpress.org/reference/functions/register_nav_menus/
  */
 return [
-    'primary_menu' => 'Primary Menu',
+    'primary' => __('Primary Menu', 'pollora'),
+    'footer' => __('Footer Menu', 'pollora'),
 ];

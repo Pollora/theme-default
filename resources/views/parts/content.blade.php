@@ -1,40 +1,25 @@
-<article id="post-{{ Loop::id() }}" {!! post_class() !!}>
-    <header class="entry-header">
+<article id="post-{{ get_the_ID() }}" {!! post_class('mx-auto max-w-3xl px-6 py-16 lg:px-8') !!}>
+    <header>
         @if(is_singular())
-            <h1 class="entry-title text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl">{!! Loop::title() !!}</h1>
+            <h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                @title
+            </h1>
         @else
-            <h2 class="entry-title text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl">
-                <a href="{{ esc_url(get_permalink()) }}" rel="bookmark">{!! Loop::title() !!}</a>
+            <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                <a href="@permalink" class="hover:text-primary transition" rel="bookmark">
+                    @title
+                </a>
             </h2>
         @endif
 
         @if('post' === get_post_type())
-            <div class="entry-meta relative z-10 order-first mb-3 flex items-center text-sm text-zinc-400 mt-4 pl-3.5 space-x-4">
-                <span class="absolute inset-y-0 left-0 flex items-center" aria-hidden="true">
-                    <span class="h-4 w-0.5 rounded-full bg-zinc-200"></span>
-                </span>
-                {!! posted_on() !!}
+            <div class="mt-4 flex items-center gap-4 text-sm text-muted">
+                <time datetime="@published('c')">@published</time>
             </div>
         @endif
     </header>
-    <div class="entry-content mt-6 prose prose-stone">
-        {!! Loop::content(sprintf(
-            wp_kses(
-                __('Continue reading<span class="screen-reader-text"> "%s"</span>', 'pollora'),
-                [
-                    'span' => [
-                        'class' => []
-                    ]
-                ]
-            ),
-            Loop::title()
-        )) !!}
-        {!!
-            wp_link_pages([
-                'before' => '<div class="page-links">'.esc_html__('Pages:', 'pollora'),
-                'after' => '</div>',
-                'echo' => false
-            ]);
-        !!}
+
+    <div class="entry-content mt-8 text-base leading-relaxed text-foreground/80">
+        @content
     </div>
-</article><!-- #post-{{ Loop::id() }} -->
+</article>

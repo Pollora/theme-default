@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'assets_path' => 'resources/assets',
     /*
     |--------------------------------------------------------------------------
     | Theme name
@@ -12,15 +13,16 @@ return [
     |
     */
 
-    'name' => '%theme_name%',
+    'name' => 'default',
 
     /*
     |--------------------------------------------------------------------------
-    | Theme assets path
+    | Inherit from another theme
     |--------------------------------------------------------------------------
     |
-    | Use in assets publishing etc.
+    | Set up inherit from another if the file is not exists.
     |
     */
-    'assets_path' => 'resources/assets',
+
+    'inherit' => null,
 ];

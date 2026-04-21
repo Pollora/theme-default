@@ -2,9 +2,9 @@
 export default {
     content: [
         "./../../resources/views/**/*.blade.php",
-        "./views/**/*.blade.php",
-        "./assets/**/*.{js,css}",
-        "./assets/**/*.{js,css}",
+        "./resources/**/*.blade.php",
+        "./resources/assets/**/*.{js,css}",
+        "./resources/assets/**/*.{js,css}",
     ],
     theme: {
         extend: {},

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    @loop
+    @posts
         @include('parts.content')
-    @endloop
+    @endposts
 @endsection

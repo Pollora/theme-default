@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * %theme_name% Theme Functions
+ * SolidarMonde Theme Functions
  *
  * This file registers the theme with the Pollora framework using the
  * ThemeRegistrar service directly.

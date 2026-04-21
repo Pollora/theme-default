@@ -5,11 +5,6 @@
  */
 
 
-import.meta.glob([
-    './images/**',
-    './fonts/**',
-]);
-
 import "./js/bootstrap.js";
 
 // styles
