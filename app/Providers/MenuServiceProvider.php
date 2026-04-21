@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace %theme_namespace%\Providers;
+namespace Theme\%theme_namespace%\Providers;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
