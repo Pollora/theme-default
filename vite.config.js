@@ -1,5 +1,7 @@
 import { defineConfig } from "vite";
 import laravel, { refreshPaths } from 'laravel-vite-plugin';
+import { wordpressPlugin } from '@roots/vite-plugin';
+import { globSync } from 'glob';
 import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -14,6 +16,16 @@ const getBaseUrl = () => {
 };
 
 const isHttps = getBaseUrl().startsWith('https');
+
+const blockEntries = globSync('./resources/blocks/*/{index,view}.{js,jsx,ts,tsx}')
+    .concat(globSync('./resources/blocks/*/{editor,style}.css'))
+    .reduce((acc, file) => {
+        const slug = path.basename(path.dirname(file));
+        const name = path.basename(file, path.extname(file));
+        acc[`blocks/${slug}/${name}`] = file;
+        return acc;
+    }, {});
+const hasBlocks = Object.keys(blockEntries).length > 0;
 
 const getDevServerConfig = () => {
     const commonConfig = {
@@ -57,13 +69,14 @@ const getDevServerConfig = () => {
 
 const getThemeConfig = () => ({
     base: "/build/theme/" + themeName,
-    input: ["./resources/assets/app.js"],
+    input: ["./resources/assets/app.js", ...Object.values(blockEntries)],
     publicDirectory,
     hotFile: path.join(publicDirectory, `${themeName}.hot`),
     buildDirectory: path.join("build", "theme", themeName),
     refresh: [
         ...refreshPaths,
         'themes/'+themeName+'/resources/views/**',
+        'resources/blocks/**',
     ],
     assets: [
         'resources/assets/images/**',
@@ -79,6 +92,7 @@ export default defineConfig({
     plugins: [
         tailwindcss(),
         laravel(getThemeConfig()),
+        ...(hasBlocks ? [wordpressPlugin()] : []),
         {
             name: "blade",
             handleHotUpdate({ file, server }) {
