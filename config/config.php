@@ -20,7 +20,8 @@ return [
     | Inherit from another theme
     |--------------------------------------------------------------------------
     |
-    | Set up inherit from another if the file is not exists.
+    | Set up
+     inherit from another if the file is not exists.
     |
     */
 

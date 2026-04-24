@@ -38,7 +38,7 @@ cd /path/to/theme-default
 ./bin/package-theme.sh /path/to/your-project/themes/pollora-starter
 ```
 
-The script replaces all `pollora-starter` / `PolloraStarter` / `Theme\PolloraStarter` references with the appropriate `%placeholder%` tokens.
+The script replaces all `pollora-starter` / `PolloraStarter` / `%theme_namespace%` references with the appropriate `%placeholder%` tokens.
 
 4. **Review, commit, tag and push**:
 
@@ -62,13 +62,13 @@ The following placeholders are replaced by `pollora:make-theme`:
 
 | Placeholder | Replaced with |
 |---|---|
-| `%theme_name%` | Theme slug (e.g. `my-theme`) |
+| `pollora-starter` | Theme slug (e.g. `my-theme`) |
 | `%theme_namespace%` | PSR-4 namespace (e.g. `Theme\MyTheme`) |
-| `%theme_uri%` | Theme URL |
-| `%theme_author%` | Author name |
-| `%theme_author_uri%` | Author URL |
-| `%theme_description%` | Theme description |
-| `%theme_version%` | Version number |
+| `https://pollora.dev` | Theme URL |
+| `Pollora` | Author name |
+| `https://pollora.dev` | Author URL |
+| `Pollora starter theme` | Theme description |
+| `1.0.0` | Version number |
 
 ### Important
 

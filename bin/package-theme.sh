@@ -15,6 +15,7 @@ set -euo pipefail
 
 SOURCE="${1:?Usage: $0 <source-theme-path>}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TARGET_DIR="$(dirname "$SCRIPT_DIR")"
 
 # The dev theme code name and its StudlyCase variant
 CODE_NAME="pollora-starter"
@@ -22,7 +23,7 @@ CODE_STUDLY="PolloraStarter"
 
 echo "=== Packaging theme ==="
 echo "  Source: $SOURCE"
-echo "  Target: $SCRIPT_DIR"
+echo "  Target: $TARGET_DIR"
 echo ""
 
 if [ ! -d "$SOURCE" ]; then
@@ -38,12 +39,13 @@ rsync -av --delete \
     --exclude='yarn.lock' \
     --exclude='.git' \
     --exclude='package-theme.sh' \
-    "$SOURCE/" "$SCRIPT_DIR/" \
+    --exclude='bin/' \
+    "$SOURCE/" "$TARGET_DIR/" \
     --quiet
 
 echo "Replacing code name with placeholders..."
 
-find "$SCRIPT_DIR" -type f \
+find "$TARGET_DIR" -type f \
     -not -path "*/.git/*" \
     -not -path "*/node_modules/*" \
     -not -name "package-theme.sh" \
@@ -73,7 +75,7 @@ echo ""
 echo "=== Done ==="
 echo ""
 echo "Review changes:"
-echo "  cd $SCRIPT_DIR && git diff"
+echo "  cd $TARGET_DIR && git diff"
 echo ""
 echo "Then commit, tag and push:"
 echo "  git add -A && git commit -m 'feat: update theme template'"
