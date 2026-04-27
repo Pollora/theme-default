@@ -18,20 +18,35 @@ class MenuServiceProvider extends ServiceProvider
         });
     }
 
+    /**
+     * @return list<object>
+     */
     private function getMenu(string $location): array
     {
-        try {
-            $items = iterator_to_array(menu($location));
-            if (! empty($items)) {
-                return $items;
-            }
-        } catch (\Exception) {
-            // Menu not configured, fall through to fallback
+        $locations = get_nav_menu_locations();
+
+        if (! isset($locations[$location])) {
+            return $this->getFallbackMenu();
         }
 
-        return $this->getFallbackMenu();
+        $items = wp_get_nav_menu_items($locations[$location]);
+
+        if (! $items) {
+            return $this->getFallbackMenu();
+        }
+
+        return array_map(fn (\WP_Post $item) => (object) [
+            'title' => $item->title,
+            'url' => $item->url,
+            'ID' => $item->ID,
+            'classes' => $item->classes ?? [],
+            'current' => $item->current ?? false,
+        ], $items);
     }
 
+    /**
+     * @return list<object>
+     */
     private function getFallbackMenu(): array
     {
         $items = [];
