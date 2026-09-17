@@ -77,6 +77,7 @@ const getThemeConfig = () => ({
     refresh: [
         ...refreshPaths.filter((refreshPath) => refreshPath !== 'resources/views/**'),
         'themes/'+themeName+'/resources/views/**/*.blade.php',
+        'resources/views/**/*.blade.php',
     ],
     assets: [
         'resources/assets/images/**',
