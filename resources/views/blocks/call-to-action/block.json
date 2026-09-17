@@ -50,5 +50,5 @@
     "editorScript": "file:./index.jsx",
     "editorStyle": "file:./editor.css",
     "style": "file:./style.css",
-    "render": "file:./render.php"
+    "render": "file:./render.blade.php"
 }
