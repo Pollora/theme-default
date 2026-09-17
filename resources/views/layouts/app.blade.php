@@ -61,7 +61,7 @@
                     <img src="{{ Asset::url('images/pollora-logo.svg') }}" alt="{{ get_bloginfo('name') }}" class="h-8 w-auto">
                 </a>
                 <p class="text-sm text-muted">
-                    Powered by <a href="https://github.com/Pollora" class="font-medium text-foreground hover:text-primary transition">Pollora</a>
+                    Powered by <a href="https://pollora.dev" class="font-medium text-foreground hover:text-primary transition">Pollora</a>
                     — Laravel meets WordPress.
                 </p>
             </div>

@@ -1,6 +1,6 @@
 # Pollora Default Theme
 
-The default theme template for [Pollora](https://github.com/Pollora/framework). This repository contains placeholder files that are processed by `pollora:make-theme` when creating a new project.
+The default theme template for [Pollora](https://pollora.dev). This repository contains placeholder files that are processed by `pollora:make-theme` when creating a new project.
 
 ## For End Users
 
