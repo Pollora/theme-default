@@ -20,7 +20,7 @@
                     Ship faster, build smarter.
                 </p>
                 <div class="mt-10 flex flex-wrap gap-4">
-                    <a href="https://github.com/Pollora" class="wp-element-button inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5">
+                    <a href="https://pollora.dev/getting-started/installation/" class="wp-element-button inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5">
                         Get started
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
                     </a>
