@@ -45,10 +45,13 @@ rsync -av --delete \
 
 echo "Replacing code name with placeholders..."
 
+# README.md documents the packaging workflow itself, so it names the code name
+# on purpose. Every other file must come out of here carrying placeholders only.
 find "$TARGET_DIR" -type f \
     -not -path "*/.git/*" \
     -not -path "*/node_modules/*" \
     -not -name "package-theme.sh" \
+    -not -name "README.md" \
     -not -name "*.woff2" \
     -not -name "*.png" \
     -not -name "*.jpg" \
@@ -69,7 +72,33 @@ find "$TARGET_DIR" -type f \
             -e "s|Author URI: https://pollora.dev|Author URI: %theme_author_uri%|g" \
             -e "s|Version: [0-9.]*|Version: %theme_version%|g" \
             "$file"
+
+        # Catch-all, last.
+        #
+        # The rules above are anchored on a surrounding phrase, which means a
+        # new file shape is silently left alone: the blocks added in
+        # resources/views/blocks went out in v1.4.0 still naming
+        # "%theme_name%/hero", "%theme_name%" as their text domain and
+        # .wp-block-%theme_name%-hero as their class, because no anchored rule
+        # matched JSON, JSX or CSS. The slug is unique enough to replace
+        # wherever it appears, so anything the anchored rules miss lands here
+        # rather than in a published tag.
+        #
+        # There is deliberately no equivalent for the StudlyCase variant: the
+        # only placeholder for it is %theme_namespace%, which expands to
+        # "Theme\Something" and is handled by the first anchored rule.
+        sed -i "s|${CODE_NAME}|%theme_name%|g" "$file"
     done
+
+echo "Checking nothing kept the code name..."
+
+if leaked=$(grep -rn "${CODE_NAME}\|${CODE_STUDLY}" "$TARGET_DIR" \
+        --exclude-dir=.git --exclude-dir=node_modules --exclude=README.md --exclude=package-theme.sh); then
+    echo ""
+    echo "Error: the code name survived packaging:"
+    echo "$leaked"
+    exit 1
+fi
 
 echo ""
 echo "=== Done ==="

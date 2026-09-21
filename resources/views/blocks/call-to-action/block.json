@@ -1,14 +1,14 @@
 {
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
-    "name": "pollora-starter/call-to-action",
+    "name": "%theme_name%/call-to-action",
     "version": "1.0.0",
     "title": "Call to Action",
     "category": "design",
     "icon": "megaphone",
     "description": "A call-to-action block with heading, text, and button.",
     "keywords": ["cta", "call-to-action", "button", "banner"],
-    "textdomain": "pollora-starter",
+    "textdomain": "%theme_name%",
     "attributes": {
         "heading": {
             "type": "string",
