@@ -238,12 +238,29 @@ if (is_dir($existing)) {
 
 echo "  \033[2m→ scaffolding with {$command}\033[0m\n";
 
-$scaffold = run('php artisan '.$command.' '.escapeshellarg($slug)
-    .' --theme-author=Pollora --theme-description='.escapeshellarg('Theme under test')
-    .' --theme-version=1.0.0 --force --no-interaction');
+// The scaffolder fetches the starter from GitHub, so this step can fail
+// for reasons that have nothing to do with the commit under test — a rate
+// limit, an archive that times out. One retry, then the failure stands:
+// retrying forever would turn a broken starter into a slow green build.
+$scaffold = ['code' => 1, 'out' => ''];
+
+foreach ([1, 2] as $attempt) {
+    $scaffold = run('php artisan '.$command.' '.escapeshellarg($slug)
+        .' --theme-author=Pollora --theme-description='.escapeshellarg('Theme under test')
+        .' --theme-version=1.0.0 --force --no-interaction');
+
+    if ($scaffold['code'] === 0) {
+        break;
+    }
+
+    if ($attempt === 1) {
+        echo "  \033[33m→ scaffolding failed, retrying once\033[0m\n";
+        sleep(10);
+    }
+}
 
 if ($scaffold['code'] !== 0) {
-    fwrite(STDERR, "\n\033[31mScaffolding failed:\033[0m\n{$scaffold['out']}\n\n");
+    fwrite(STDERR, "\n\033[31mScaffolding failed twice:\033[0m\n{$scaffold['out']}\n\n");
     exit(1);
 }
 
