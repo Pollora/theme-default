@@ -30,11 +30,18 @@ declare(strict_types=1);
 const LEGACY_ROUTE_VIEWS = ['home', 'post', 'page', 'errors/404'];
 
 /**
- * What the WordPress template hierarchy resolves against. `index` is the last
- * link in the chain: without it every archive answers 200 with an empty body,
- * which is how seven page types shipped broken before v13.32.0-beta.3.
+ * What the WordPress template hierarchy resolves against.
+ *
+ * `index` is the last link in the chain: without it every archive answers 200
+ * with an empty body, which is how seven page types shipped broken before
+ * v13.32.0-beta.3.
+ *
+ * `404` is here because the hierarchy looks for that name and nothing else.
+ * The theme's own not-found screen lived at errors/404 alone, so a missing
+ * page rendered the generic index fallback on every modern skeleton — with
+ * the right status code, which is why nothing reported it.
  */
-const HIERARCHY_VIEWS = ['index', 'home', 'page', 'single'];
+const HIERARCHY_VIEWS = ['index', 'home', 'page', 'single', '404'];
 
 function viewExists(string $view): bool
 {
@@ -59,6 +66,32 @@ function checkViewContract(): void
         return $missing === []
             ? true
             : 'missing '.implode(', ', $missing).' — those page types render empty';
+    });
+
+    // The two names the not-found screen answers to. Neither can go: the
+    // hierarchy will not look for errors/404, and skeletons up to v13.4 ask
+    // for nothing else.
+    test('Both names of the not-found screen render the same body', function () {
+        $hierarchy = themePath('resources/views/404.blade.php');
+        $legacy = themePath('resources/views/errors/404.blade.php');
+
+        if (! is_file($hierarchy)) {
+            return '404.blade.php is missing — a missing page will render the generic index fallback';
+        }
+
+        if (! is_file($legacy)) {
+            return 'errors/404.blade.php is missing — skeletons up to v13.4 get "View [errors.404] not found"';
+        }
+
+        $shared = 'parts.not-found';
+
+        foreach ([$hierarchy => '404', $legacy => 'errors/404'] as $path => $name) {
+            if (! str_contains((string) file_get_contents($path), $shared)) {
+                return "{$name} no longer includes {$shared}, so the two screens can drift apart";
+            }
+        }
+
+        return true;
     });
 
     // post.blade.php exists only for the older skeletons. It has no place in
