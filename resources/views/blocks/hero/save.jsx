@@ -6,7 +6,7 @@ export default function Save() {
 
     return (
         <div {...blockProps}>
-            <p>{__('Hero', 'pollora-starter')}</p>
+            <p>{__('Hero', '%theme_name%')}</p>
         </div>
     );
 }

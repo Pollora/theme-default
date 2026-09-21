@@ -6,7 +6,7 @@ export default function Edit() {
 
     return (
         <div {...blockProps}>
-            <p>{__('Hero – Block Editor', 'pollora-starter')}</p>
+            <p>{__('Hero – Block Editor', '%theme_name%')}</p>
         </div>
     );
 }

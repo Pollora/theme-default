@@ -9,26 +9,26 @@ export default function Edit({ attributes, setAttributes }) {
     return (
         <>
             <InspectorControls>
-                <PanelBody title={__('Button Settings', 'pollora-starter')}>
+                <PanelBody title={__('Button Settings', '%theme_name%')}>
                     <TextControl
-                        label={__('Button Text', 'pollora-starter')}
+                        label={__('Button Text', '%theme_name%')}
                         value={buttonText}
                         onChange={(val) => setAttributes({ buttonText: val })}
                     />
                     <URLInput
-                        label={__('Button URL', 'pollora-starter')}
+                        label={__('Button URL', '%theme_name%')}
                         value={buttonUrl}
                         onChange={(val) => setAttributes({ buttonUrl: val })}
                     />
                 </PanelBody>
-                <PanelBody title={__('Layout', 'pollora-starter')}>
+                <PanelBody title={__('Layout', '%theme_name%')}>
                     <SelectControl
-                        label={__('Text Alignment', 'pollora-starter')}
+                        label={__('Text Alignment', '%theme_name%')}
                         value={alignment}
                         options={[
-                            { label: __('Left', 'pollora-starter'), value: 'left' },
-                            { label: __('Center', 'pollora-starter'), value: 'center' },
-                            { label: __('Right', 'pollora-starter'), value: 'right' },
+                            { label: __('Left', '%theme_name%'), value: 'left' },
+                            { label: __('Center', '%theme_name%'), value: 'center' },
+                            { label: __('Right', '%theme_name%'), value: 'right' },
                         ]}
                         onChange={(val) => setAttributes({ alignment: val })}
                     />
@@ -38,25 +38,25 @@ export default function Edit({ attributes, setAttributes }) {
             <div {...blockProps}>
                 <RichText
                     tagName="h2"
-                    className="wp-block-pollora-starter-call-to-action__heading"
+                    className="wp-block-%theme_name%-call-to-action__heading"
                     value={heading}
                     onChange={(val) => setAttributes({ heading: val })}
-                    placeholder={__('Your heading here…', 'pollora-starter')}
+                    placeholder={__('Your heading here…', '%theme_name%')}
                 />
                 <RichText
                     tagName="p"
-                    className="wp-block-pollora-starter-call-to-action__description"
+                    className="wp-block-%theme_name%-call-to-action__description"
                     value={description}
                     onChange={(val) => setAttributes({ description: val })}
-                    placeholder={__('Add a description…', 'pollora-starter')}
+                    placeholder={__('Add a description…', '%theme_name%')}
                 />
-                <div className="wp-block-pollora-starter-call-to-action__button-wrapper">
+                <div className="wp-block-%theme_name%-call-to-action__button-wrapper">
                     <RichText
                         tagName="span"
-                        className="wp-block-pollora-starter-call-to-action__button"
+                        className="wp-block-%theme_name%-call-to-action__button"
                         value={buttonText}
                         onChange={(val) => setAttributes({ buttonText: val })}
-                        placeholder={__('Button text', 'pollora-starter')}
+                        placeholder={__('Button text', '%theme_name%')}
                     />
                 </div>
             </div>

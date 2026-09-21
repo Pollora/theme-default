@@ -1,5 +1,5 @@
 {{--
-    Server-side rendering for the pollora-starter/call-to-action block.
+    Server-side rendering for the %theme_name%/call-to-action block.
 
     Available variables:
     - array    $attributes  Block attributes
@@ -9,7 +9,7 @@
 @php
     $heading = $attributes['heading'] ?? '';
     $description = $attributes['description'] ?? '';
-    $buttonText = $attributes['buttonText'] ?? __('Learn More', 'pollora-starter');
+    $buttonText = $attributes['buttonText'] ?? __('Learn More', '%theme_name%');
     $buttonUrl = $attributes['buttonUrl'] ?? '#';
     $alignment = $attributes['alignment'] ?? 'center';
 @endphp
@@ -17,20 +17,20 @@
 @if ($heading !== '' || $description !== '')
     <div {!! get_block_wrapper_attributes(['class' => 'has-text-align-' . $alignment]) !!}>
         @if ($heading !== '')
-            <h2 class="wp-block-pollora-starter-call-to-action__heading">
+            <h2 class="wp-block-%theme_name%-call-to-action__heading">
                 {!! wp_kses_post($heading) !!}
             </h2>
         @endif
 
         @if ($description !== '')
-            <p class="wp-block-pollora-starter-call-to-action__description">
+            <p class="wp-block-%theme_name%-call-to-action__description">
                 {!! wp_kses_post($description) !!}
             </p>
         @endif
 
         @if ($buttonText !== '')
-            <div class="wp-block-pollora-starter-call-to-action__button-wrapper">
-                <a class="wp-block-pollora-starter-call-to-action__button" href="{{ esc_url_raw($buttonUrl) }}">
+            <div class="wp-block-%theme_name%-call-to-action__button-wrapper">
+                <a class="wp-block-%theme_name%-call-to-action__button" href="{{ esc_url_raw($buttonUrl) }}">
                     {{ $buttonText }}
                 </a>
             </div>
