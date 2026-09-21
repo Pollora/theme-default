@@ -184,6 +184,35 @@ function checkNoLeakedCodeName(): void
             : 'style.css lost '.implode(', ', $missing).' — generated themes will carry this template\'s own header';
     });
 
+    // Cheap guard for an expensive lesson. v1.4.0 registered the blocks
+    // straight from the provider's boot(), which runs before WordPress has
+    // defined register_block_type(); the registrar answers that by returning
+    // immediately, so the blocks simply never existed and nothing said so.
+    // Only the install job can prove they arrive — this says where the call
+    // has to live, in a second.
+    test('Blocks are registered on init, not from the provider boot', function () {
+        $provider = themePath('app/Providers/BlocksServiceProvider.php');
+
+        if (! is_file($provider)) {
+            return 'app/Providers/BlocksServiceProvider.php is gone — the blocks have nothing registering them';
+        }
+
+        $source = (string) file_get_contents($provider);
+
+        // The call, not the word: the comment above it names the method too.
+        $call = strpos($source, '->registerDirectory(');
+
+        if ($call === false) {
+            return 'the provider no longer calls registerDirectory()';
+        }
+
+        $hook = strpos($source, "add_action('init'");
+
+        return $hook !== false && $hook < $call
+            ? true
+            : 'registerDirectory() is called before WordPress accepts block registrations, so no block will exist';
+    });
+
     test('Blocks name themselves after the generated theme, not the template', function () {
         $blocks = glob(themePath('resources/views/blocks/*/block.json')) ?: [];
 

@@ -123,6 +123,11 @@ jobs:
         working-directory: site
         run: ddev exec php artisan key:generate --no-interaction
 
+      # On framework 13.4 this command installs WordPress and then exits 1: its
+      # last step calls `pollora:make-theme` with no name, which Symfony
+      # rejects when it cannot prompt. The gate is whether WordPress is
+      # installed, so that is what is checked, rather than inferring it from an
+      # exit code that means something else.
       - name: Install WordPress
         working-directory: site
         run: |
@@ -134,13 +139,18 @@ jobs:
             --admin-password=pollora-theme-ci \
             --locale=en_US \
             --public=false \
-            --no-interaction
+            --no-interaction || true
+          ddev exec wp core is-installed
 
       # The scaffolder can only download a tag, so without --source this job
       # would measure the last release and report it as the branch being green.
       - name: Place the commit under test where the container can reach it
         run: cp -r theme site/theme-under-test
 
+      # --expect-blocks is deliberately not passed: the blocks have to reach
+      # the registry on both framework generations. They did not until the
+      # theme's BlocksServiceProvider stopped registering them from boot(),
+      # before WordPress accepts block registrations at all.
       - name: Install check
         working-directory: site
         run: |
