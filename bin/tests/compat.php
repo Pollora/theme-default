@@ -204,30 +204,6 @@ function checkRegistrationGuard(): void
 }
 
 /**
- * The placeholders the scaffolder substitutes, with plausible values.
- *
- * Mirrors MakeThemeCommand::getReplacements(). A template file is not valid
- * PHP on its own — `namespace %theme_namespace%\Providers;` does not parse —
- * so linting the repository as it stands measures nothing. What has to parse
- * is what the user receives, which is this.
- *
- * @return array<string, string>
- */
-function scaffolderReplacements(): array
-{
-    return [
-        '%theme_name%' => 'my-theme',
-        '%theme_camel%' => 'myTheme',
-        '%theme_namespace%' => 'Theme\\MyTheme',
-        '%theme_author%' => 'Someone',
-        '%theme_author_uri%' => 'https://example.com',
-        '%theme_uri%' => 'https://example.com/my-theme',
-        '%theme_description%' => 'A theme',
-        '%theme_version%' => '1.0.0',
-    ];
-}
-
-/**
  * Every PHP file the theme ships has to parse once it is scaffolded.
  *
  * A parse error in a theme file is not a caught exception: WordPress serves a
@@ -236,6 +212,8 @@ function scaffolderReplacements(): array
 function checkSyntax(): void
 {
     section('Syntax — every PHP file parses once scaffolded');
+
+    require_once dirname(__DIR__).'/replacements.php';
 
     $files = [];
     $iterator = new RecursiveIteratorIterator(

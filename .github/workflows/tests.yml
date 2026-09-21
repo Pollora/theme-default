@@ -1,0 +1,157 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'fix/**'
+      - 'ci/**'
+  pull_request:
+  schedule:
+    # Nightly. This repository ships by tag, not by release: a framework
+    # released after this theme was tagged can break it without a single
+    # commit landing here, and nothing else would notice.
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Contract
+    runs-on: ubuntu-latest
+
+    # The scaffolder only strips bin/, so this file follows every generated
+    # theme into its own repository, where it would fail on the first push for
+    # reasons that have nothing to do with the user's theme.
+    if: github.repository == 'Pollora/theme-default'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      # No Composer install, no database, no site: these are properties of the
+      # files in this repository, and they run in about a second.
+      - name: Contract tests
+        run: php bin/tests/run.php
+
+  install:
+    name: Install (skeleton ${{ matrix.skeleton }})
+    runs-on: ubuntu-latest
+
+    if: github.repository == 'Pollora/theme-default'
+
+    # `make:theme` downloads this repository's latest tag onto whatever site
+    # asks for it, so the theme has to work on two generations of skeleton at
+    # once:
+    #
+    #   v13.4.0  renders a post through Route::wp('single', fn () => view('post'))
+    #            and never consults the template hierarchy
+    #   dev-main the hierarchy picks the template
+    #
+    # The second is also covered by the skeleton's own CI, but only against the
+    # published tag. Here both are measured against the commit under test.
+    strategy:
+      fail-fast: false
+      matrix:
+        skeleton: ['v13.4.0', 'dev-main']
+
+    steps:
+      - name: Checkout the theme
+        uses: actions/checkout@v6
+        with:
+          path: theme
+
+      - name: Setup DDEV
+        uses: ddev/github-action-setup-ddev@v1
+        with:
+          autostart: false
+
+      # --no-install and --no-scripts: the skeleton's install hooks want a
+      # database, and there is none until DDEV is up.
+      - name: Create the skeleton
+        run: |
+          composer create-project pollora/pollora site '${{ matrix.skeleton }}' \
+            --no-install --no-scripts --no-interaction
+
+      # Same stack as the skeleton's own install scenarios, so a failure here
+      # means the theme and not the environment.
+      - name: Configure DDEV
+        working-directory: site
+        run: |
+          ddev config \
+            --project-name=pollora-theme \
+            --project-type=wordpress \
+            --docroot=public \
+            --php-version=8.4 \
+            --webserver-type=apache-fpm \
+            --database=mariadb:10.11 \
+            --nodejs-version=22 \
+            --disable-settings-management
+
+      - name: Start DDEV
+        working-directory: site
+        run: ddev start
+
+      - name: Prepare .env
+        working-directory: site
+        run: |
+          cp .env.example .env
+          sed -i \
+            -e 's#^APP_URL=.*#APP_URL=https://pollora-theme.ddev.site#' \
+            -e 's#^DB_CONNECTION=.*#DB_CONNECTION=mysql#' \
+            -e 's/^# DB_HOST=.*/DB_HOST=db/' \
+            -e 's/^# DB_PORT=.*/DB_PORT=3306/' \
+            -e 's/^# DB_DATABASE=.*/DB_DATABASE=db/' \
+            -e 's/^# DB_USERNAME=.*/DB_USERNAME=db/' \
+            -e 's/^# DB_PASSWORD=.*/DB_PASSWORD=db/' \
+            .env
+
+      - name: Install Composer dependencies
+        working-directory: site
+        run: ddev composer install --no-interaction --no-progress
+
+      - name: Generate application key
+        working-directory: site
+        run: ddev exec php artisan key:generate --no-interaction
+
+      - name: Install WordPress
+        working-directory: site
+        run: |
+          ddev exec php artisan pollora:install --install \
+            --title="Theme CI" \
+            --description="Pollora theme CI" \
+            --admin-user=admin \
+            --admin-email=admin@example.com \
+            --admin-password=pollora-theme-ci \
+            --locale=en_US \
+            --public=false \
+            --no-interaction
+
+      # The scaffolder can only download a tag, so without --source this job
+      # would measure the last release and report it as the branch being green.
+      - name: Place the commit under test where the container can reach it
+        run: cp -r theme site/theme-under-test
+
+      - name: Install check
+        working-directory: site
+        run: |
+          ddev exec bash -c '
+            php theme-under-test/bin/ci/check-install.php \
+              --url=https://pollora-theme.ddev.site \
+              --slug=ci-theme \
+              --source=/var/www/html/theme-under-test
+          '
+
+      - name: Laravel log
+        if: failure()
+        working-directory: site
+        run: tail -n 200 storage/logs/laravel.log || true
