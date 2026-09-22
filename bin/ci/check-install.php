@@ -466,18 +466,29 @@ test(
 
 section('Login screen — the theme\'s design, or WordPress\'s, and which one it is');
 
-// Whether the framework under this site ships the login module at all.
+// Two independent properties of the framework under this site, read from the
+// installed package rather than passed in: the matrix cannot answer either,
+// because the dev-main skeleton resolves the framework from Packagist and
+// which generation that is changes on its own between releases.
 //
-// Read from the installed package rather than asked for on the command line,
-// because the matrix cannot answer it: the dev-main skeleton resolves the
-// framework from Packagist, so which generation this job runs against changes
-// on its own between releases. Both outcomes are asserted, and the one taken
-// is printed, so neither turns the check off.
-$hasLoginModule = is_dir('vendor/pollora/framework/src/Login');
+// They are read separately because they shipped separately. The entry-point
+// fix — wp-login.php answering its real status instead of 404 — landed in
+// 13.32.0-beta.4; the login module came later. Tying the status expectation
+// to the module would demand a 404 from beta.4, which answers 200 correctly.
+// A file, not the directory: an empty src/Login/ can survive a checkout —
+// git does not track empty directories — and would claim a module that is
+// not there.
+$hasLoginModule = is_file('vendor/pollora/framework/src/Login/Infrastructure/Services/LoginScreen.php');
+$hasEntryPointFix = str_contains(
+    (string) @file_get_contents('vendor/pollora/framework/src/WordPress/QueryTrait.php'),
+    'laravelIsServingTheRequest'
+);
 
-echo $hasLoginModule
-    ? "\033[2m  framework ships the login module — expecting the theme's design\033[0m\n"
-    : "\033[2m  framework has no login module — expecting the pre-13.32 behaviour\033[0m\n";
+printf(
+    "\033[2m  framework: login module %s, entry-point fix %s\033[0m\n",
+    $hasLoginModule ? 'yes' : 'no',
+    $hasEntryPointFix ? 'yes' : 'no'
+);
 
 $loginUrl = trim(wpEval('echo wp_login_url();'));
 $login = http($loginUrl);
@@ -486,29 +497,32 @@ test('The login screen serves a form', fn () => str_contains($login['body'], 'na
     ? true
     : "{$loginUrl} served no login form (status {$login['status']})");
 
-if (! $hasLoginModule) {
-    // Both of these are assertions about a framework that cannot be fixed —
-    // v13.4.0 is tagged — so they are written down rather than skipped. The
-    // day either changes, under a backport or a newer tag on that line, this
-    // says so instead of passing quietly either way.
-    test('It answers 404, as every framework before 13.32.0-beta.4 did', function () use ($login) {
-        // runWp() resolved the URL as a content request even when PHP was
-        // running wp-login.php, and /cms/wp-login.php matches the attachment
-        // rewrite rule; WordPress found no such attachment and sent a 404
-        // before rendering a perfectly good form underneath it.
-        return $login['status'] === 404
-            ? true
-            : "it answered {$login['status']}; this framework now fixes the login 404, so this branch is stale";
-    });
+// Asserted in both directions rather than skipped on the old framework:
+// v13.4.0 is tagged and cannot be fixed, so the 404 it answers is written
+// down. The day a backport changes it, this says so instead of passing
+// quietly either way.
+test(
+    $hasEntryPointFix
+        ? 'It answers 200'
+        : 'It answers 404, as every framework before 13.32.0-beta.4 did',
+    function () use ($login, $hasEntryPointFix, $loginUrl) {
+        // Before the fix, runWp() resolved the URL as a content request even
+        // when PHP was running wp-login.php, and /cms/wp-login.php matches
+        // the attachment rewrite rule; WordPress found no such attachment and
+        // sent a 404 before rendering a perfectly good form underneath it.
+        $expected = $hasEntryPointFix ? 200 : 404;
 
+        return $login['status'] === $expected
+            ? true
+            : "{$loginUrl} answered {$login['status']}, expected {$expected}";
+    }
+);
+
+if (! $hasLoginModule) {
     test('The screen is WordPress\'s own, untouched', fn () => str_contains($login['body'], 'pollora-login')
         ? 'this framework has no login module, yet the screen carries pollora-login'
         : true);
 } else {
-    test('It answers 200', fn () => $login['status'] === 200
-        ? true
-        : "{$loginUrl} answered {$login['status']}");
-
     test('The theme\'s config/login.php reaches the screen', fn () => str_contains($login['body'], 'pollora-login')
         ? true
         : 'the theme ships a config/login.php and the screen carries none of it');
