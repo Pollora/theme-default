@@ -28,6 +28,7 @@ checkRegistrationGuard();
 checkViewContract();
 checkViewReferences();
 checkNoLeakedCodeName();
+checkLoginConfig();
 checkSyntax();
 
 exit(summary());

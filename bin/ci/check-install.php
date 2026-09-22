@@ -464,6 +464,90 @@ test(
     }
 );
 
+section('Login screen — the theme\'s design, or WordPress\'s, and which one it is');
+
+// Whether the framework under this site ships the login module at all.
+//
+// Read from the installed package rather than asked for on the command line,
+// because the matrix cannot answer it: the dev-main skeleton resolves the
+// framework from Packagist, so which generation this job runs against changes
+// on its own between releases. Both outcomes are asserted, and the one taken
+// is printed, so neither turns the check off.
+$hasLoginModule = is_dir('vendor/pollora/framework/src/Login');
+
+echo $hasLoginModule
+    ? "\033[2m  framework ships the login module — expecting the theme's design\033[0m\n"
+    : "\033[2m  framework has no login module — expecting the pre-13.32 behaviour\033[0m\n";
+
+$loginUrl = trim(wpEval('echo wp_login_url();'));
+$login = http($loginUrl);
+
+test('The login screen serves a form', fn () => str_contains($login['body'], 'name="loginform"')
+    ? true
+    : "{$loginUrl} served no login form (status {$login['status']})");
+
+if (! $hasLoginModule) {
+    // Both of these are assertions about a framework that cannot be fixed —
+    // v13.4.0 is tagged — so they are written down rather than skipped. The
+    // day either changes, under a backport or a newer tag on that line, this
+    // says so instead of passing quietly either way.
+    test('It answers 404, as every framework before 13.32.0-beta.4 did', function () use ($login) {
+        // runWp() resolved the URL as a content request even when PHP was
+        // running wp-login.php, and /cms/wp-login.php matches the attachment
+        // rewrite rule; WordPress found no such attachment and sent a 404
+        // before rendering a perfectly good form underneath it.
+        return $login['status'] === 404
+            ? true
+            : "it answered {$login['status']}; this framework now fixes the login 404, so this branch is stale";
+    });
+
+    test('The screen is WordPress\'s own, untouched', fn () => str_contains($login['body'], 'pollora-login')
+        ? 'this framework has no login module, yet the screen carries pollora-login'
+        : true);
+} else {
+    test('It answers 200', fn () => $login['status'] === 200
+        ? true
+        : "{$loginUrl} answered {$login['status']}");
+
+    test('The theme\'s config/login.php reaches the screen', fn () => str_contains($login['body'], 'pollora-login')
+        ? true
+        : 'the theme ships a config/login.php and the screen carries none of it');
+
+    test('It wears the theme\'s own colours, not a fallback', function () use ($login) {
+        if (preg_match('/--pollora-login-primary:\s*([^;]+);/', $login['body'], $m) !== 1) {
+            return 'no --pollora-login-primary was printed';
+        }
+
+        $primary = trim($m[1]);
+
+        // theme.json declares #ff5334 as `primary`. Anything else means the
+        // palette did not reach the screen and a default stood in for it.
+        return $primary === '#ff5334'
+            ? true
+            : "primary resolved to {$primary}, not the theme.json value #ff5334";
+    });
+
+    test('The theme\'s logo is on it', fn () => str_contains($login['body'], '--pollora-login-logo: url("data:image/svg+xml;base64,')
+        ? true
+        : 'no inlined logo reached the screen; WordPress\'s would be showing instead');
+
+    test('The logo links to the site, not to wordpress.org', fn () => str_contains($login['body'], 'wordpress.org')
+        ? 'the logo still points at wordpress.org'
+        : true);
+
+    test('Nothing leaked out of the style element', function () use ($login) {
+        // The palette's values are printed inside <style>; a value carrying a
+        // brace or a closing tag would end it early and spill CSS into the page.
+        if (preg_match('#<style id="pollora-login">(.*?)</style>#s', $login['body'], $m) !== 1) {
+            return 'the stylesheet was not printed at all';
+        }
+
+        return str_contains($m[1], '</')
+            ? 'the stylesheet contains a closing tag'
+            : true;
+    });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 $total = $passed + $failed;
