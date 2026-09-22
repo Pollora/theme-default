@@ -272,3 +272,76 @@ function checkNoLeakedCodeName(): void
         return $wrong === [] ? true : implode(', ', $wrong);
     });
 }
+
+/**
+ * The login config has to name a file that is there.
+ *
+ * Pollora reads `config/login.php` and inlines whatever `logo.source` points
+ * at, from the theme's root. A path that does not resolve is not an error
+ * anywhere: the framework falls back to WordPress's logo and the screen looks
+ * almost right, which is exactly how a wrong path survives a review. Moving
+ * the file, or renaming the directory it sits in, is caught here instead.
+ *
+ * The file is executed in its own interpreter with the two WordPress
+ * functions it calls stubbed, because that is how the theme module loads it —
+ * a `require`, on `init`, with WordPress up.
+ */
+function checkLoginConfig(): void
+{
+    section('Login screen — the config names files that exist');
+
+    $path = themePath('config/login.php');
+
+    test('config/login.php is present', fn () => is_file($path) ?: 'the theme no longer ships a login config, so its login screen is WordPress\'s');
+
+    if (! is_file($path)) {
+        return;
+    }
+
+    $result = phpRun(
+        'function home_url($p = "") { return "https://example.test".$p; }'."\n"
+        .'function get_bloginfo($s = "", $f = "raw") { return "Example"; }'."\n"
+        .'echo json_encode(require '.var_export($path, true).');'
+    );
+
+    test('config/login.php is readable on its own', function () use ($result) {
+        return $result['code'] === 0 ? true : 'it did not run: '.trim($result['out']);
+    });
+
+    if ($result['code'] !== 0) {
+        return;
+    }
+
+    $config = json_decode($result['out'], true);
+    $source = is_array($config) ? ($config['logo']['source'] ?? null) : null;
+
+    test('It names a logo', fn () => is_string($source) && $source !== ''
+        ? true
+        : 'logo.source is missing, so the screen falls back to WordPress\'s logo without saying so');
+
+    test('The logo it names is in the repository', function () use ($source) {
+        if (! is_string($source) || $source === '') {
+            return 'skipped: no logo named';
+        }
+
+        $file = themePath($source);
+
+        return is_file($file)
+            ? true
+            : $source.' does not exist — the login screen would silently keep WordPress\'s logo';
+    });
+
+    test('The logo is small enough to inline', function () use ($source) {
+        if (! is_string($source) || ! is_file(themePath($source))) {
+            return 'skipped: no logo to measure';
+        }
+
+        // The framework refuses past 96 KB, and base64 adds a third again to
+        // every login response.
+        $size = (int) filesize(themePath($source));
+
+        return $size <= 98304
+            ? true
+            : $source.' is '.number_format($size).' bytes; the framework will not inline it';
+    });
+}

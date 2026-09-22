@@ -464,6 +464,104 @@ test(
     }
 );
 
+section('Login screen — the theme\'s design, or WordPress\'s, and which one it is');
+
+// Two independent properties of the framework under this site, read from the
+// installed package rather than passed in: the matrix cannot answer either,
+// because the dev-main skeleton resolves the framework from Packagist and
+// which generation that is changes on its own between releases.
+//
+// They are read separately because they shipped separately. The entry-point
+// fix — wp-login.php answering its real status instead of 404 — landed in
+// 13.32.0-beta.4; the login module came later. Tying the status expectation
+// to the module would demand a 404 from beta.4, which answers 200 correctly.
+// A file, not the directory: an empty src/Login/ can survive a checkout —
+// git does not track empty directories — and would claim a module that is
+// not there.
+$hasLoginModule = is_file('vendor/pollora/framework/src/Login/Infrastructure/Services/LoginScreen.php');
+$hasEntryPointFix = str_contains(
+    (string) @file_get_contents('vendor/pollora/framework/src/WordPress/QueryTrait.php'),
+    'laravelIsServingTheRequest'
+);
+
+printf(
+    "\033[2m  framework: login module %s, entry-point fix %s\033[0m\n",
+    $hasLoginModule ? 'yes' : 'no',
+    $hasEntryPointFix ? 'yes' : 'no'
+);
+
+$loginUrl = trim(wpEval('echo wp_login_url();'));
+$login = http($loginUrl);
+
+test('The login screen serves a form', fn () => str_contains($login['body'], 'name="loginform"')
+    ? true
+    : "{$loginUrl} served no login form (status {$login['status']})");
+
+// Asserted in both directions rather than skipped on the old framework:
+// v13.4.0 is tagged and cannot be fixed, so the 404 it answers is written
+// down. The day a backport changes it, this says so instead of passing
+// quietly either way.
+test(
+    $hasEntryPointFix
+        ? 'It answers 200'
+        : 'It answers 404, as every framework before 13.32.0-beta.4 did',
+    function () use ($login, $hasEntryPointFix, $loginUrl) {
+        // Before the fix, runWp() resolved the URL as a content request even
+        // when PHP was running wp-login.php, and /cms/wp-login.php matches
+        // the attachment rewrite rule; WordPress found no such attachment and
+        // sent a 404 before rendering a perfectly good form underneath it.
+        $expected = $hasEntryPointFix ? 200 : 404;
+
+        return $login['status'] === $expected
+            ? true
+            : "{$loginUrl} answered {$login['status']}, expected {$expected}";
+    }
+);
+
+if (! $hasLoginModule) {
+    test('The screen is WordPress\'s own, untouched', fn () => str_contains($login['body'], 'pollora-login')
+        ? 'this framework has no login module, yet the screen carries pollora-login'
+        : true);
+} else {
+    test('The theme\'s config/login.php reaches the screen', fn () => str_contains($login['body'], 'pollora-login')
+        ? true
+        : 'the theme ships a config/login.php and the screen carries none of it');
+
+    test('It wears the theme\'s own colours, not a fallback', function () use ($login) {
+        if (preg_match('/--pollora-login-primary:\s*([^;]+);/', $login['body'], $m) !== 1) {
+            return 'no --pollora-login-primary was printed';
+        }
+
+        $primary = trim($m[1]);
+
+        // theme.json declares #ff5334 as `primary`. Anything else means the
+        // palette did not reach the screen and a default stood in for it.
+        return $primary === '#ff5334'
+            ? true
+            : "primary resolved to {$primary}, not the theme.json value #ff5334";
+    });
+
+    test('The theme\'s logo is on it', fn () => str_contains($login['body'], '--pollora-login-logo: url("data:image/svg+xml;base64,')
+        ? true
+        : 'no inlined logo reached the screen; WordPress\'s would be showing instead');
+
+    test('The logo links to the site, not to wordpress.org', fn () => str_contains($login['body'], 'wordpress.org')
+        ? 'the logo still points at wordpress.org'
+        : true);
+
+    test('Nothing leaked out of the style element', function () use ($login) {
+        // The palette's values are printed inside <style>; a value carrying a
+        // brace or a closing tag would end it early and spill CSS into the page.
+        if (preg_match('#<style id="pollora-login">(.*?)</style>#s', $login['body'], $m) !== 1) {
+            return 'the stylesheet was not printed at all';
+        }
+
+        return str_contains($m[1], '</')
+            ? 'the stylesheet contains a closing tag'
+            : true;
+    });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 $total = $passed + $failed;
