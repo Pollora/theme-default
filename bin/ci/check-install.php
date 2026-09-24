@@ -45,14 +45,12 @@ $baseUrl = rtrim((string) $options['url'], '/');
 $slug = (string) ($options['slug'] ?? 'ci-theme');
 $source = isset($options['source']) ? rtrim((string) $options['source'], '/') : null;
 
-// Whether this framework discovers blocks from resources/views/blocks.
-//
-// Measured, not assumed: on framework 13.4 the theme's BlocksServiceProvider
-// boots before WordPress has defined register_block_type(), so
-// BlockRegistrar::registerDirectory() returns early and the blocks never
-// arrive. The caller says which behaviour it expects rather than the script
-// skipping when it does not find them — a check that quietly turns itself off
-// is how a broken fix shipped behind a green suite.
+// Whether this framework registers the theme's resources/views/blocks in a web
+// request. Measured, not assumed: 13.32.0-beta.7 does; 13.4 never did — its
+// registration only ever happened under WP-CLI. The caller says which
+// behaviour it expects rather than the script skipping when it does not find
+// them — a check that quietly turns itself off is how a broken fix shipped
+// behind a green suite.
 $expectBlocks = ($options['expect-blocks'] ?? 'yes') !== 'no';
 
 $host = parse_url($baseUrl, PHP_URL_HOST) ?: '';
@@ -218,7 +216,104 @@ function overlaySource(string $source, string $themeDir, string $slug): void
         $copied++;
     }
 
-    echo "  \033[2m→ overlaid {$copied} files from the commit under test\033[0m\n";
+    // A copy only adds and overwrites. A file the commit under test deletes
+    // would survive from the tag, and CI would measure a theme that still has
+    // it — BlocksServiceProvider was the first such removal. Limited to the
+    // source directories: the build and node_modules are not in the repository.
+    $removed = 0;
+
+    foreach (['app', 'config', 'resources'] as $directory) {
+        if (! is_dir($themeDir.'/'.$directory)) {
+            continue;
+        }
+
+        $generated = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($themeDir.'/'.$directory, FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($generated as $file) {
+            $relative = substr($file->getPathname(), strlen($themeDir) + 1);
+
+            if (! file_exists($source.'/'.$relative)) {
+                unlink($file->getPathname());
+                $removed++;
+            }
+        }
+    }
+
+    echo "  \033[2m→ overlaid {$copied} files from the commit under test, removed {$removed} it deletes\033[0m\n";
+}
+
+/**
+ * A logged-in session, for what only an editor may read: the REST API's block
+ * types. The REST API accepts the session's cookie once it is sent with the
+ * nonce that goes with it.
+ */
+final class Session
+{
+    private readonly string $jar;
+
+    /** @var list<string> */
+    private array $headers = [];
+
+    public function __construct()
+    {
+        $this->jar = tempnam(sys_get_temp_dir(), 'theme-ci-').'.cookies';
+    }
+
+    public function __destruct()
+    {
+        @unlink($this->jar);
+    }
+
+    public function logIn(string $loginUrl, string $adminUrl, string $user, string $password): void
+    {
+        $this->visit($loginUrl, ['log' => $user, 'pwd' => $password, 'wp-submit' => 'Log In', 'testcookie' => '1']);
+
+        // Handed out to a logged-in session only.
+        $nonce = trim($this->visit($adminUrl.'/admin-ajax.php?action=rest-nonce')['body']);
+
+        if (preg_match('/^[a-f0-9]{10}$/', $nonce) !== 1) {
+            throw new \RuntimeException('no REST nonce — the login did not establish a session');
+        }
+
+        $this->headers = ['X-WP-Nonce: '.$nonce];
+    }
+
+    /**
+     * @param  array<string, string>  $post
+     * @return array{status: int, body: string}
+     */
+    public function visit(string $url, array $post = []): array
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_TIMEOUT => 45,
+            CURLOPT_COOKIEJAR => $this->jar,
+            CURLOPT_COOKIEFILE => $this->jar,
+            CURLOPT_HTTPHEADER => $this->headers,
+        ]);
+
+        if ($post !== []) {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post));
+        }
+
+        $body = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error !== '') {
+            throw new \RuntimeException("{$url}: {$error}");
+        }
+
+        return ['status' => $status, 'body' => is_string($body) ? $body : ''];
+    }
 }
 
 echo "\n\033[1m=== theme-default — install check ===\033[0m\n";
@@ -425,44 +520,70 @@ test('Every block is namespaced under the generated theme', function () use ($sl
     return $wrong === [] ? true : implode(', ', $wrong);
 });
 
-test(
-    $expectBlocks
-        ? 'Every block reaches the WordPress block registry'
-        : 'No block reaches the registry — this framework cannot discover them',
-    function () use ($manifests, $expectBlocks, $slug) {
-        if ($manifests === []) {
-            return 'no block.json reached the generated theme';
-        }
+// Asked of the REST API over HTTP, not of WP-CLI. WP-CLI boots WordPress in
+// an order no web request uses: on framework 13.4 the theme's
+// BlocksServiceProvider registered the blocks there and nowhere else, so a
+// `wp eval` found them while the editor, the page and the REST API had none.
+// Since 13.32.0-beta.7 the framework registers resources/views/blocks itself
+// and the provider is gone.
+$blockAccount = 'theme-ci-blocks';
+$blockPassword = bin2hex(random_bytes(12));
 
-        $registered = explode(',', wpEval(
-            'echo implode(",", array_keys(WP_Block_Type_Registry::get_instance()->get_all_registered()));'
-        ));
+run('wp user delete '.escapeshellarg($blockAccount).' --yes');
 
-        $found = [];
-        $absent = [];
+try {
+    test(
+        $expectBlocks
+            ? 'Every block reaches the REST API'
+            : 'No block reaches the REST API — this framework does not register them in a web request',
+        function () use ($manifests, $expectBlocks, $slug, $blockAccount, $blockPassword) {
+            if ($manifests === []) {
+                return 'no block.json reached the generated theme';
+            }
 
-        foreach ($manifests as $manifest) {
-            $name = (string) (json_decode((string) file_get_contents($manifest), true)['name'] ?? '');
+            wpOrFail('user create '.escapeshellarg($blockAccount).' theme-ci-blocks@example.test'
+                .' --role=administrator --user_pass='.escapeshellarg($blockPassword).' --porcelain');
 
-            in_array($name, $registered, true) ? $found[] = $name : $absent[] = $name;
-        }
+            $session = new Session;
+            $session->logIn(
+                trim(wpEval('echo wp_login_url();')),
+                rtrim(trim(wpEval('echo admin_url();')), '/'),
+                $blockAccount,
+                $blockPassword
+            );
 
-        if ($expectBlocks) {
-            return $absent === []
+            $restUrl = trim(wpEval('echo rest_url();'));
+            $found = [];
+            $absent = [];
+
+            foreach ($manifests as $manifest) {
+                $name = (string) (json_decode((string) file_get_contents($manifest), true)['name'] ?? '');
+                $status = $session->visit($restUrl.'wp/v2/block-types/'.$name)['status'];
+
+                match ($status) {
+                    200 => $found[] = $name,
+                    404 => $absent[] = $name,
+                    default => throw new \RuntimeException("the REST API answered {$status} for {$name}"),
+                };
+            }
+
+            if ($expectBlocks) {
+                return $absent === []
+                    ? true
+                    : implode(', ', $absent).' did not reach the REST API';
+            }
+
+            // Asserted in the negative on purpose: v13.4.0 is tagged and
+            // cannot change, so what it does is written down. The day a
+            // backport changes it, this says so instead of passing either way.
+            return $found === []
                 ? true
-                : implode(', ', $absent).' did not reach the registry';
+                : implode(', ', $found)." now registers on this framework; drop --expect-blocks=no for {$slug}";
         }
-
-        // Asserted in the negative on purpose. Framework 13.4 boots the
-        // theme's providers before WordPress defines register_block_type(),
-        // so registerDirectory() returns early. Recording that as an
-        // expectation means the day it changes — a fix, a backport — this
-        // says so, instead of a skip quietly passing either way.
-        return $found === []
-            ? true
-            : implode(', ', $found)." now registers on this framework; drop --expect-blocks=no for {$slug}";
-    }
-);
+    );
+} finally {
+    run('wp user delete '.escapeshellarg($blockAccount).' --yes');
+}
 
 section('Login screen — the theme\'s design, or WordPress\'s, and which one it is');
 

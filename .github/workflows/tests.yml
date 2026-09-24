@@ -147,10 +147,10 @@ jobs:
       - name: Place the commit under test where the container can reach it
         run: cp -r theme site/theme-under-test
 
-      # --expect-blocks is deliberately not passed: the blocks have to reach
-      # the registry on both framework generations. They did not until the
-      # theme's BlocksServiceProvider stopped registering them from boot(),
-      # before WordPress accepts block registrations at all.
+      # v13.4.0 registers the theme's blocks under WP-CLI only, never in a web
+      # request, and it is tagged: --expect-blocks=no writes that down, and
+      # the check says so the day it changes. dev-main runs a framework that
+      # registers resources/views/blocks itself (13.32.0-beta.7 and later).
       - name: Install check
         working-directory: site
         run: |
@@ -158,7 +158,8 @@ jobs:
             php theme-under-test/bin/ci/check-install.php \
               --url=https://pollora-theme.ddev.site \
               --slug=ci-theme \
-              --source=/var/www/html/theme-under-test
+              --source=/var/www/html/theme-under-test \
+              --expect-blocks=${{ matrix.skeleton == 'v13.4.0' && 'no' || 'yes' }}
           '
 
       - name: Laravel log
