@@ -12,6 +12,26 @@ composer create-project pollora/pollora my-project
 php artisan pollora:make-theme my-theme
 ```
 
+## Design tokens
+
+The design lives in the `@theme static` block of `resources/assets/css/app.css`:
+colours, type scale and radii, with concrete values. `npm run build` writes
+them into the `theme.json` the editor reads
+(`public/build/theme/<slug>/assets/theme.json`), so the page and the editor
+always offer the same palette and sizes.
+
+- Change a token in `app.css`, not in `theme.json`: the root `theme.json` is
+  only the base (layout, fonts, block styles), and a slug defined there wins
+  over `@theme`.
+- The font is the exception: Inter needs a `fontFace` declaration, which only
+  `theme.json` can hold, so fonts are declared there and `vite.config.js` turns
+  their generation off (`disableTailwindFonts`). The same option exists for
+  colours, font sizes and radii.
+- Spacing and layout widths are not generated: set them in `theme.json`.
+
+See [Theme.json and Vite Build Integration](https://pollora.dev/theming/theme-structure/)
+for the details.
+
 ## Contributing
 
 ### Development Setup
