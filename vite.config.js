@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import laravel, { refreshPaths } from 'laravel-vite-plugin';
-import { wordpressPlugin } from '@roots/vite-plugin';
+import { wordpressPlugin, wordpressThemeJson } from '@roots/vite-plugin';
 import { globSync } from 'glob';
 import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
@@ -93,6 +93,31 @@ export default defineConfig({
     plugins: [
         tailwindcss(),
         laravel(getThemeConfig()),
+        wordpressThemeJson({
+            baseThemeJsonPath: './theme.json',
+            // Inter needs its @font-face, which only theme.json can declare
+            disableTailwindFonts: true,
+            fontSizeLabels: {
+                xs: 'Extra Small',
+                sm: 'Small',
+                base: 'Medium',
+                lg: 'Large',
+                xl: 'Extra Large',
+                '2xl': '2X Large',
+                '3xl': '3X Large',
+                '4xl': '4X Large',
+                '5xl': '5X Large',
+                '6xl': '6X Large',
+                '7xl': '7X Large',
+            },
+            borderRadiusLabels: {
+                sm: 'Small',
+                md: 'Medium',
+                lg: 'Large',
+                xl: 'Extra Large',
+                '2xl': '2X Large',
+            },
+        }),
         ...(hasBlocks ? [wordpressPlugin()] : []),
         {
             name: "blade",

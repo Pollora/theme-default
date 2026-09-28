@@ -4,60 +4,6 @@
     "customTemplates": [],
     "settings": {
         "appearanceTools": true,
-        "color": {
-            "palette": [
-                {
-                    "slug": "primary",
-                    "color": "#ff5334",
-                    "name": "Primary"
-                },
-                {
-                    "slug": "primary-vivid",
-                    "color": "#fb196d",
-                    "name": "Primary Vivid"
-                },
-                {
-                    "slug": "secondary",
-                    "color": "#ff8c12",
-                    "name": "Secondary"
-                },
-                {
-                    "slug": "accent",
-                    "color": "#feb017",
-                    "name": "Accent"
-                },
-                {
-                    "slug": "foreground",
-                    "color": "#1d142a",
-                    "name": "Foreground"
-                },
-                {
-                    "slug": "muted",
-                    "color": "#6b7280",
-                    "name": "Muted"
-                },
-                {
-                    "slug": "surface",
-                    "color": "#fafafa",
-                    "name": "Surface"
-                },
-                {
-                    "slug": "surface-alt",
-                    "color": "#f5f3ff",
-                    "name": "Surface Alt"
-                },
-                {
-                    "slug": "background",
-                    "color": "#ffffff",
-                    "name": "Background"
-                },
-                {
-                    "slug": "border",
-                    "color": "#e5e7eb",
-                    "name": "Border"
-                }
-            ]
-        },
         "custom": {
             "spacing": {
                 "small": "max(1.25rem, 5vw)",
@@ -107,24 +53,6 @@
                             "src": ["file:./fonts/Inter-Italic.woff2"]
                         }
                     ]
-                }
-            ],
-            "fontSizes": [
-                {
-                    "size": "var(--text-sm)",
-                    "slug": "small"
-                },
-                {
-                    "size": "var(--text-base)",
-                    "slug": "medium"
-                },
-                {
-                    "size": "var(--text-4xl)",
-                    "slug": "large"
-                },
-                {
-                    "size": "var(--text-5xl)",
-                    "slug": "x-large"
                 }
             ]
         },
