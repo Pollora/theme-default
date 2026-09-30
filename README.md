@@ -23,7 +23,7 @@ always offer the same palette and sizes.
 - Change a token in `app.css`, not in `theme.json`: the root `theme.json` is
   only the base (layout, fonts, block styles), and a slug defined there wins
   over `@theme`.
-- The font is the exception: Inter needs a `fontFace` declaration, which only
+- The font is the exception: Inter (the variable font, `InterVariable.woff2`) needs a `fontFace` declaration, which only
   `theme.json` can hold, so fonts are declared there and `vite.config.js` turns
   their generation off (`disableTailwindFonts`). The same option exists for
   colours, font sizes and radii.
@@ -31,6 +31,27 @@ always offer the same palette and sizes.
 
 See [Theme.json and Vite Build Integration](https://pollora.dev/theming/theme-structure/)
 for the details.
+
+## Gutenberg design system
+
+Every core block is styled in `theme.json` (`styles`: root, elements, blocks),
+from the presets above only, so a paragraph, a quote, a table or a button look
+the same in the editor and on the page. Block-specific touches that
+`theme.json` has no property for (the quote's gradient border, the table's
+rules) sit in each block's `css` field, which the editor loads too.
+
+- Reference presets by the name WordPress prints: `5xl` becomes
+  `var(--wp--preset--font-size--5-xl)`. Never a Tailwind variable
+  (`var(--text-xl)`): it does not exist in the editor.
+- A block's `css` takes one selector per rule; WordPress wraps it in
+  `:root :where(...)` and breaks on `a, b`.
+- `app/Cms/StyleLayers.php` puts WordPress's CSS in cascade layers, declared at
+  the top of `app.css`: `theme, base, wp-core, wp, components, utilities`. The
+  block library and the global styles beat Tailwind's reset, and a Tailwind
+  class in a Blade template always beats them. A link in the templates that
+  should not look like a content link says so with `no-underline`.
+- `php bin/tests/run.php` checks that every preset and custom variable the
+  styles use exists.
 
 ## Contributing
 
