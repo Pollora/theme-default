@@ -29,6 +29,7 @@ checkViewContract();
 checkViewReferences();
 checkNoLeakedCodeName();
 checkLoginConfig();
+checkDesignSystem();
 checkSyntax();
 
 exit(summary());
