@@ -31,6 +31,22 @@ if [ ! -d "$SOURCE" ]; then
     exit 1
 fi
 
+# Views the development copy keeps for pollora-test's template-hierarchy tests
+# (tests/Feature/Routing/TemplateHierarchyTest.php): they are fixtures, not part
+# of the template, so they never leave the development copy.
+TEST_FIXTURES=(
+    resources/views/archive.blade.php
+    resources/views/author.blade.php
+    resources/views/category.blade.php
+    resources/views/search.blade.php
+    resources/views/single-project.blade.php
+    resources/views/taxonomy.blade.php
+)
+FIXTURE_EXCLUDES=()
+for fixture in "${TEST_FIXTURES[@]}"; do
+    FIXTURE_EXCLUDES+=(--exclude="/$fixture")
+done
+
 # Sync files
 echo "Syncing files..."
 rsync -av --delete \
@@ -44,6 +60,7 @@ rsync -av --delete \
     --exclude='/.github/' \
     --exclude='/LICENSE' \
     --exclude='/license.txt' \
+    "${FIXTURE_EXCLUDES[@]}" \
     "$SOURCE/" "$TARGET_DIR/" \
     --quiet
 
