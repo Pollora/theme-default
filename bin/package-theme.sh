@@ -40,8 +40,33 @@ rsync -av --delete \
     --exclude='.git' \
     --exclude='package-theme.sh' \
     --exclude='bin/' \
+    --exclude='/README.md' \
+    --exclude='/.github/' \
+    --exclude='/LICENSE' \
+    --exclude='/license.txt' \
     "$SOURCE/" "$TARGET_DIR/" \
     --quiet
+
+# package.json comes from the development copy, which declares no license (or
+# another one): the template's is MIT, the same as LICENSE.
+echo "Setting the package.json license to MIT..."
+node -e '
+const fs = require("fs");
+const [file, license] = process.argv.slice(1);
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+let out = pkg;
+if ("license" in pkg) {
+    pkg.license = license;
+} else {
+    out = {};
+    for (const [key, value] of Object.entries(pkg)) {
+        out[key] = value;
+        if (key === "private") out.license = license;
+    }
+    if (!("license" in out)) out.license = license;
+}
+fs.writeFileSync(file, JSON.stringify(out, null, 4) + "\n");
+' "$TARGET_DIR/package.json" "MIT"
 
 echo "Replacing code name with placeholders..."
 
@@ -49,6 +74,8 @@ echo "Replacing code name with placeholders..."
 # on purpose. Every other file must come out of here carrying placeholders only.
 find "$TARGET_DIR" -type f \
     -not -path "*/.git/*" \
+    -not -path "*/.github/*" \
+    -not -path "*/bin/*" \
     -not -path "*/node_modules/*" \
     -not -name "package-theme.sh" \
     -not -name "README.md" \
@@ -93,7 +120,7 @@ find "$TARGET_DIR" -type f \
 echo "Checking nothing kept the code name..."
 
 if leaked=$(grep -rn "${CODE_NAME}\|${CODE_STUDLY}" "$TARGET_DIR" \
-        --exclude-dir=.git --exclude-dir=node_modules --exclude=README.md --exclude=package-theme.sh); then
+        --exclude-dir=.git --exclude-dir=.github --exclude-dir=bin --exclude-dir=node_modules --exclude=README.md --exclude=package-theme.sh); then
     echo ""
     echo "Error: the code name survived packaging:"
     echo "$leaked"
