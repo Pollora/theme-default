@@ -18,7 +18,7 @@ declare(strict_types=1);
  * placeholder the scaffolder does not substitute": a key that disappears here
  * or a token that appears in the template without a key both fail it.
  *
- * @return array<string, string>  placeholder => a plausible substituted value
+ * @return array<string, string> placeholder => a plausible substituted value
  */
 function scaffolderReplacements(string $slug = 'my-theme'): array
 {

@@ -85,7 +85,7 @@ function test(string $name, callable $fn): void
 
     try {
         $result = $fn();
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         echo "  \033[31m✗\033[0m  {$name} — {$e->getMessage()}\n";
         $failed++;
 
@@ -111,7 +111,7 @@ function run(string $command): array
     $process = proc_open($command.' 2>&1', $descriptors, $pipes);
 
     if (! is_resource($process)) {
-        throw new \RuntimeException("could not run: {$command}");
+        throw new RuntimeException("could not run: {$command}");
     }
 
     $out = stream_get_contents($pipes[1]) ?: '';
@@ -127,7 +127,7 @@ function wpOrFail(string $arguments): string
     $result = run('wp '.$arguments);
 
     if ($result['code'] !== 0) {
-        throw new \RuntimeException("wp {$arguments} failed: {$result['out']}");
+        throw new RuntimeException("wp {$arguments} failed: {$result['out']}");
     }
 
     return $result['out'];
@@ -274,7 +274,7 @@ final class Session
         $nonce = trim($this->visit($adminUrl.'/admin-ajax.php?action=rest-nonce')['body']);
 
         if (preg_match('/^[a-f0-9]{10}$/', $nonce) !== 1) {
-            throw new \RuntimeException('no REST nonce — the login did not establish a session');
+            throw new RuntimeException('no REST nonce — the login did not establish a session');
         }
 
         $this->headers = ['X-WP-Nonce: '.$nonce];
@@ -309,7 +309,7 @@ final class Session
         curl_close($ch);
 
         if ($error !== '') {
-            throw new \RuntimeException("{$url}: {$error}");
+            throw new RuntimeException("{$url}: {$error}");
         }
 
         return ['status' => $status, 'body' => is_string($body) ? $body : ''];
@@ -442,9 +442,9 @@ $pages['A page'] = $pageUrl;
 foreach ($pages as $label => $url) {
     $expected = $label === 'An unknown URL' ? 404 : 200;
 
-    test("{$label} answers {$expected} with a real document", function () use ($url, $baseUrl, $expected, $label) {
+    test("{$label} answers {$expected} with a real document", function () use ($url, $baseUrl, $expected) {
         if ($url === null || $url === '') {
-            return "no URL to request — the fixture this check needs is missing, so it would pass on an empty site";
+            return 'no URL to request — the fixture this check needs is missing, so it would pass on an empty site';
         }
 
         $absolute = str_starts_with($url, 'http') ? $url : $baseUrl.$url;
@@ -563,7 +563,7 @@ try {
                 match ($status) {
                     200 => $found[] = $name,
                     404 => $absent[] = $name,
-                    default => throw new \RuntimeException("the REST API answered {$status} for {$name}"),
+                    default => throw new RuntimeException("the REST API answered {$status} for {$name}"),
                 };
             }
 
