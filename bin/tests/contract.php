@@ -330,7 +330,7 @@ function wpKebab(string $slug): string
 }
 
 /**
- * @return array<string, list<string>>  preset kind => CSS-variable slugs WordPress will print
+ * @return array<string, list<string>> preset kind => CSS-variable slugs WordPress will print
  */
 function designSystemPresets(array $themeJson): array
 {
@@ -373,7 +373,7 @@ function designSystemPresets(array $themeJson): array
 }
 
 /**
- * @return list<string>  the --wp--custom-- variables settings.custom defines
+ * @return list<string> the --wp--custom-- variables settings.custom defines
  */
 function designSystemCustomVariables(array $custom, string $prefix = ''): array
 {

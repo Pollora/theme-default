@@ -13,7 +13,6 @@ declare(strict_types=1);
  * A check returns true (pass), or a string explaining the failure. There is no
  * skip: a check that cannot fail is the defect this suite exists to prevent.
  */
-
 final class Results
 {
     public static int $passed = 0;
@@ -35,7 +34,7 @@ function test(string $name, callable $fn): void
 {
     try {
         $result = $fn();
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         echo "  \033[31m✗\033[0m  {$name} — {$e->getMessage()}\n";
         Results::$failed++;
 
@@ -99,7 +98,7 @@ function phpRun(string $code): array
     if (! is_resource($process)) {
         unlink($file);
 
-        throw new \RuntimeException('could not start a PHP process');
+        throw new RuntimeException('could not start a PHP process');
     }
 
     $out = stream_get_contents($pipes[1]) ?: '';
