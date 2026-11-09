@@ -19,5 +19,11 @@
         "laravel-vite-plugin": "^3.0.1",
         "tailwindcss": "^4.2.3",
         "vite": "^8.0.9"
+    },
+    "overrides": {
+        "react-autosize-textarea": {
+            "react": "^18.0.0",
+            "react-dom": "^18.0.0"
+        }
     }
 }
