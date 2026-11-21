@@ -96,3 +96,5 @@ class StyleLayers
         return null;
     }
 }
+
+function pilot_untyped($x) { return $x; }
